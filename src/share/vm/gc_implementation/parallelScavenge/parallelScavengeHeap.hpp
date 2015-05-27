@@ -162,6 +162,10 @@ class ParallelScavengeHeap : public CollectedHeap {
   HeapWord* failed_mem_allocate(size_t size);
 
   // Support for System.gc()
+  // <underscore> one possible entry for the GC to work, from System.gc().
+  // <underscore> this expands in the following frames:
+  // <underscore> collect -> vmThread.execute -> VM_ParallelGCSystemGC.doit()
+  // <underscore> -> [invoke_scavenge | do_full_collection]
   void collect(GCCause::Cause cause);
 
   // These also should be called by the vm thread at a safepoint (e.g., from a
@@ -171,6 +175,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   // will then attempt a full gc.  The second collects the entire heap; if
   // maximum_compaction is true, it will compact everything and clear all soft
   // references.
+  // <underscore> I think these two methods (invoke_scavenge and
+  // <underscore> do_full_collection are two main entry points for GC.
   inline void invoke_scavenge();
 
   // Perform a full collection

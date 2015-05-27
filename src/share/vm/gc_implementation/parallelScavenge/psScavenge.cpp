@@ -217,6 +217,7 @@ void PSRefProcTaskExecutor::execute(EnqueueTask& task)
 //
 // Note that this method should only be called from the vm_thread while
 // at a safepoint!
+// <underscore> this is where it gets interesting!
 bool PSScavenge::invoke() {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(), "should be in vm thread");
@@ -245,6 +246,8 @@ bool PSScavenge::invoke() {
     const bool clear_all_softrefs = cp->should_clear_all_soft_refs();
 
     if (UseParallelOldGC) {
+      // <underscore> here it decides whether to go for a compact or a mark-sweep
+      // <underscore> GC.
       full_gc_done = PSParallelCompact::invoke_no_policy(clear_all_softrefs);
     } else {
       full_gc_done = PSMarkSweep::invoke_no_policy(clear_all_softrefs);
@@ -347,6 +350,7 @@ bool PSScavenge::invoke_no_policy() {
 
     // Verify no unmarked old->young roots
     if (VerifyRememberedSets) {
+      // <underscore> TODO - read, seems interesting.
       CardTableExtension::verify_all_young_refs_imprecise();
     }
 
@@ -399,6 +403,8 @@ bool PSScavenge::invoke_no_policy() {
       GCTraceTime tm("Scavenge", false, false, &_gc_timer);
       ParallelScavengeHeap::ParStrongRootsScope psrs;
 
+      // <underscore> the collector is adding tasks for each type of roots.
+      // <underscore> TODO - read tasks' code.
       GCTaskQueue* q = GCTaskQueue::create();
 
       if (!old_gen->object_space()->is_empty()) {
@@ -430,7 +436,7 @@ bool PSScavenge::invoke_no_policy() {
           q->enqueue(new StealTask(&terminator));
         }
       }
-
+      // <underscore> execute and wait for all tasks (check roots).
       gc_task_manager()->execute_and_wait(q);
     }
 
@@ -447,10 +453,12 @@ bool PSScavenge::invoke_no_policy() {
       ReferenceProcessorStats stats;
       if (reference_processor()->processing_is_mt()) {
         PSRefProcTaskExecutor task_executor;
+        // <underscore> it will traverse references.
         stats = reference_processor()->process_discovered_references(
           &_is_alive_closure, &keep_alive, &evac_followers, &task_executor,
           &_gc_timer);
       } else {
+    	// <underscore> it will traverse references.
         stats = reference_processor()->process_discovered_references(
           &_is_alive_closure, &keep_alive, &evac_followers, NULL, &_gc_timer);
       }
@@ -460,6 +468,8 @@ bool PSScavenge::invoke_no_policy() {
       // Enqueue reference objects discovered during scavenge.
       if (reference_processor()->processing_is_mt()) {
         PSRefProcTaskExecutor task_executor;
+        // <underscore> I'm not shore about what this is doing.
+        // <underscore> TODO - check later!
         reference_processor()->enqueue_discovered_references(&task_executor);
       } else {
         reference_processor()->enqueue_discovered_references(NULL);
@@ -472,6 +482,7 @@ bool PSScavenge::invoke_no_policy() {
     StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
 
     // Finally, flush the promotion_manager's labs, and deallocate its stacks.
+    // <underscore> TODO - check this later, seams important.
     promotion_failure_occurred = PSPromotionManager::post_scavenge(_gc_tracer);
     if (promotion_failure_occurred) {
       clean_up_failed_promotion();
@@ -487,6 +498,7 @@ bool PSScavenge::invoke_no_policy() {
 
     if (!promotion_failure_occurred) {
       // Swap the survivor spaces.
+      // <underscore> swapping to and from spaces (young gen).
       young_gen->eden_space()->clear(SpaceDecorator::Mangle);
       young_gen->from_space()->clear(SpaceDecorator::Mangle);
       young_gen->swap_spaces();
@@ -641,6 +653,8 @@ bool PSScavenge::invoke_no_policy() {
       // Precise verification will give false positives. Until this is fixed,
       // use imprecise verification.
       // CardTableExtension::verify_all_young_refs_precise();
+      // <underscore> verify old->young cards.
+      // <underscore> TODO - read!
       CardTableExtension::verify_all_young_refs_imprecise();
     }
 

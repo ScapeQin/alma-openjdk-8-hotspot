@@ -516,6 +516,7 @@ bool ParallelScavengeHeap::can_elide_initializing_store_barrier(oop new_obj) {
 }
 
 // This method is used by System.gc() and JVMTI.
+// <underscore> TODO - read this method!
 void ParallelScavengeHeap::collect(GCCause::Cause cause) {
   assert(!Heap_lock->owned_by_self(),
     "this thread should not own the Heap_lock");

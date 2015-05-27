@@ -464,9 +464,11 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Perform a collection of the heap; intended for use in implementing
   // "System.gc".  This probably implies as full a collection as the
   // "CollectedHeap" supports.
+  // <underscore> potential entry for garbage collection!
   virtual void collect(GCCause::Cause cause) = 0;
 
   // Perform a full collection
+  // <underscore> potential entry for garbage collection!
   virtual void do_full_collection(bool clear_all_soft_refs) = 0;
 
   // This interface assumes that it's being called by the

@@ -246,10 +246,10 @@ bool PSScavenge::invoke() {
     const bool clear_all_softrefs = cp->should_clear_all_soft_refs();
 
     if (UseParallelOldGC) {
-      // <underscore> here it decides whether to go for a compact or a mark-sweep
-      // <underscore> GC.
+      // <underscore> go for PSParallelCompact.
       full_gc_done = PSParallelCompact::invoke_no_policy(clear_all_softrefs);
     } else {
+      // <underscore> go for PSMarkSweep GC.
       full_gc_done = PSMarkSweep::invoke_no_policy(clear_all_softrefs);
     }
   }

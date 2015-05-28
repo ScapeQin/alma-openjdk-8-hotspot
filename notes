@@ -1,0 +1,39 @@
+src
+| share
+| | vm
+| | | gc_implementation
+| | | | parallelScavenge
+| | | | | parallelScavengeHeap.hpp
+| | | | | psYoungGen.hpp
+| | | | | psOldGen.hpp
+| | | | shared
+| | | | | mutableSpace.hpp
+
+
+Terms:
+ oop - a pointer into a GC managed heap.
+
+parallelScavengeHeap.hpp
+	A heap for the parallelScavenge GC (inherits from Collected Heap).
+	Very important start point for reading a GC implementation.
+	It has all the main components needed for the GC.
+	Some important methods:
+	-> collect: Used to support System.gc(). This will result in several 
+	function calls before ending up calling either: invoke_scavenge or 
+	do_full_collection;
+	-> do_full_collection
+	-> invoke: this will redirect the call to psScavenge. This is where
+	this get real interesting.
+
+psYoungGen.hpp
+	Young generation of the Generational GC. It contains the respective
+	spaces: from, to, eden, and has several funtions to get statiscs for
+	example.
+
+psOldGen.hpp
+	Similar to the young generation.
+
+mutableSpace.hpp
+	Represents a segment of memory.
+	Contains several functions that can perform memory operations.
+	Can iterate oops and objects.

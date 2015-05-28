@@ -46,7 +46,6 @@ class PSHeapSummary;
 class ParallelScavengeHeap : public CollectedHeap {
   friend class VMStructs;
  private:
-  // <underscore> TODO - reading young gen, mutabble spaces, etc.
   static PSYoungGen* _young_gen;
   static PSOldGen*   _old_gen;
 

@@ -229,6 +229,7 @@ bool PSScavenge::invoke() {
   PSAdaptiveSizePolicy* policy = heap->size_policy();
   IsGCActiveMark mark;
 
+  // <underscore> start with a minor collection. 
   const bool scavenge_done = PSScavenge::invoke_no_policy();
   const bool need_full_gc = !scavenge_done ||
     policy->should_full_GC(heap->old_gen()->free_in_bytes());
@@ -395,6 +396,7 @@ bool PSScavenge::invoke_no_policy() {
     uint active_workers = gc_task_manager()->active_workers();
     heap->set_par_threads(active_workers);
 
+    // <underscore> this is where it gets serious.
     PSPromotionManager::pre_scavenge();
 
     // We'll use the promotion manager again later.
@@ -491,6 +493,8 @@ bool PSScavenge::invoke_no_policy() {
       }
     }
 
+    // <underscore> minor collection done!
+    
     // Let the size policy know we're done.  Note that we count promotion
     // failure cleanup time as part of the collection (otherwise, we're
     // implicitly saying it's mutator time).

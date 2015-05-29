@@ -1,8 +1,11 @@
 src
 | share
 | | vm
+| | | memory
+| | | | universe.hpp
 | | | gc_implementation
 | | | | parallelScavenge
+| | | | | psScavenge.[c|h]pp
 | | | | | parallelScavengeHeap.hpp
 | | | | | psYoungGen.hpp
 | | | | | psOldGen.hpp
@@ -12,6 +15,11 @@ src
 
 Terms:
  oop - a pointer into a GC managed heap.
+ mt  - multy thread
+ lab - local allocation buffer?
+
+Side notes:
+ - there is one promotion manager per GC worker thread.
 
 parallelScavengeHeap.hpp
 	A heap for the parallelScavenge GC (inherits from Collected Heap).
@@ -25,6 +33,17 @@ parallelScavengeHeap.hpp
 	-> invoke: this will redirect the call to psScavenge. This is where
 	this get real interesting.
 
+psScavenge.[c|h]pp
+	invoke: entry point for GC. Performs a minor GC 
+	(through invoke_no_policy) and then calls compact or ms GCs if a full
+	collection is necessary.
+	invoke_no_policy: this method performs a young copy collector. It has
+	a lot of statistics/state/auxiliary stuff. The most important part
+	goes as follows:
+		1. create tasks to search heap roots. This will mark/copy the
+		root objects;
+		2. process found references. TODO - reading
+
 psYoungGen.hpp
 	Young generation of the Generational GC. It contains the respective
 	spaces: from, to, eden, and has several funtions to get statiscs for
@@ -37,3 +56,7 @@ mutableSpace.hpp
 	Represents a segment of memory.
 	Contains several functions that can perform memory operations.
 	Can iterate oops and objects.
+
+universe.hpp
+	This is a special file which comprehends many important concepts: 
+	objects, heap, etc. Read better later.

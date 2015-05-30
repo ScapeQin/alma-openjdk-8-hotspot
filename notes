@@ -3,6 +3,7 @@ src
 | | vm
 | | | memory
 | | | | universe.hpp
+| | | | referenceProcessir.[h|c]pp
 | | | gc_implementation
 | | | | parallelScavenge
 | | | | | psScavenge.[c|h]pp
@@ -42,7 +43,16 @@ psScavenge.[c|h]pp
 	goes as follows:
 		1. create tasks to search heap roots. This will mark/copy the
 		root objects;
-		2. process found references. TODO - reading
+		2. process found references. This will be accomplished by the
+		reference processor (check referenceProcessor.[h|c]pp) using
+		several different closures to define the appropriate behaviour
+		in a number of situations. I believe that these clusures define
+		the GC implementation (since the referenceProcessor algorithms
+		are shared).
+
+referenceProcessor.[h|c]pp
+	TODO - comment process_discovered_references
+	TODO - comment the three closures used
 
 psYoungGen.hpp
 	Young generation of the Generational GC. It contains the respective

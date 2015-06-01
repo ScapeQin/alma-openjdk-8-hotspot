@@ -30,7 +30,7 @@ parallelScavengeHeap.hpp
 	-> collect: Used to support System.gc(). This will result in several 
 	function calls before ending up calling either: invoke_scavenge or 
 	do_full_collection;
-	-> do_full_collection
+	-> do_full_collection: TODO - comment!
 	-> invoke: this will redirect the call to psScavenge. This is where
 	this get real interesting.
 
@@ -51,8 +51,17 @@ psScavenge.[c|h]pp
 		are shared).
 
 referenceProcessor.[h|c]pp
-	TODO - comment process_discovered_references
-	TODO - comment the three closures used
+	-> process_discovered_references: this method basically processes all 
+	kinds of references: soft, weak, final, phantom, and JNI. For each
+	type of references, the following method is called: 
+	process_discovered_reflist. 
+	-> process_discovered_reflist: done in three phases, i) remove 
+	unreachable soft-refs that should be kept alive, ii) remove refs whose 
+	referents are alive, iii) traverse the list and process the referents 
+	as approapriate).
+
+	TODO - comment the three closures used!
+	TODO - check how the ref lists are populated!
 
 psYoungGen.hpp
 	Young generation of the Generational GC. It contains the respective

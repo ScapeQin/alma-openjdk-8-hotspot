@@ -30,25 +30,32 @@ parallelScavengeHeap.hpp
 	-> collect: Used to support System.gc(). This will result in several 
 	function calls before ending up calling either: invoke_scavenge or 
 	do_full_collection;
-	-> do_full_collection: TODO - comment!
+	-> do_full_collection: TODO - comment (Mark-Sweep)!
 	-> invoke: this will redirect the call to psScavenge. This is where
 	this get real interesting.
 
 psScavenge.[c|h]pp
-	invoke: entry point for GC. Performs a minor GC 
-	(through invoke_no_policy) and then calls compact or ms GCs if a full
+	-> invoke: entry point for GC. Performs a minor GC (through 
+	invoke_no_policy) and then calls compact or ms GCs if a full
 	collection is necessary.
-	invoke_no_policy: this method performs a young copy collector. It has
-	a lot of statistics/state/auxiliary stuff. The most important part
+	-> invoke_no_policy: this method performs a young copy collector. It 
+	has a lot of statistics/state/auxiliary stuff. The most important part
 	goes as follows:
 		1. create tasks to search heap roots. This will mark/copy the
-		root objects;
+		root objects; This step will also prepare the references for
+		the next step. It will look into all kinds of roots including 
+		threads' stacks. However, I couldn't find where the lists are 
+		atually filled... I cloun't get the 
+		PromotionManager->drain_stacks...
 		2. process found references. This will be accomplished by the
 		reference processor (check referenceProcessor.[h|c]pp) using
 		several different closures to define the appropriate behaviour
 		in a number of situations. I believe that these clusures define
 		the GC implementation (since the referenceProcessor algorithms
 		are shared).
+		3. TODO - how unreachable objects are cleaned?
+
+	TODO - comment the three closures used!
 
 referenceProcessor.[h|c]pp
 	-> process_discovered_references: this method basically processes all 
@@ -59,9 +66,6 @@ referenceProcessor.[h|c]pp
 	unreachable soft-refs that should be kept alive, ii) remove refs whose 
 	referents are alive, iii) traverse the list and process the referents 
 	as approapriate).
-
-	TODO - comment the three closures used!
-	TODO - check how the ref lists are populated!
 
 psYoungGen.hpp
 	Young generation of the Generational GC. It contains the respective

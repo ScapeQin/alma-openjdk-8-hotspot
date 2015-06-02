@@ -8,6 +8,7 @@ src
 | | | | parallelScavenge
 | | | | | psScavenge.[c|h]pp
 | | | | | parallelScavengeHeap.hpp
+| | | | | psMarkSweep.[c|h]pp
 | | | | | psYoungGen.hpp
 | | | | | psOldGen.hpp
 | | | | shared
@@ -37,7 +38,7 @@ parallelScavengeHeap.hpp
 
 psScavenge.[c|h]pp
 	-> invoke: entry point for GC. Performs a minor GC (through 
-	invoke_no_policy) and then calls compact or ms GCs if a full
+	invoke_no_policy) and then calls compact or MS GCs if a full
 	collection is necessary.
 	-> invoke_no_policy: this method performs a young copy collector. It 
 	has a lot of statistics/state/auxiliary stuff. The most important part
@@ -56,6 +57,16 @@ psScavenge.[c|h]pp
 		3. TODO - how unreachable objects are cleaned?
 
 	TODO - comment the three closures used!
+
+psMarkSweep.[c|h]pp
+	-> invoke_no_policy: this can be called from collect 
+	(parallelScavengeHeap.cpp) or from invoke_no_policy (psScavenge.cpp).
+	This will launch a full Mark-Sweep + Compaction generation. The GC 
+	operation is divided into four steps:
+		1. mark live objects (mark_sweep_phase1)
+		2. calculate new addresses (mark_sweep_phase2)
+		3. update pointers (mark_sweep_phase3)
+		4. move objects to new positions (mark_sweep_phase4).
 
 referenceProcessor.[h|c]pp
 	-> process_discovered_references: this method basically processes all 

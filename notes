@@ -28,8 +28,9 @@ parallelScavengeHeap.hpp
 	It has all the main components needed for the GC.
 	Some important methods:
 	-> collect: Used to support System.gc(). This will result in several 
-	function calls before ending up calling either: invoke_scavenge or 
-	do_full_collection;
+	function calls before ending up calling either: invoke_scavenge (minor
+	collection) or do_full_collection (both young and old gens are 
+	collected);
 	-> do_full_collection: TODO - comment (Mark-Sweep)!
 	-> invoke: this will redirect the call to psScavenge. This is where
 	this get real interesting.
@@ -44,15 +45,14 @@ psScavenge.[c|h]pp
 		1. create tasks to search heap roots. This will mark/copy the
 		root objects; This step will also prepare the references for
 		the next step. It will look into all kinds of roots including 
-		threads' stacks. However, I couldn't find where the lists are 
-		atually filled... I cloun't get the 
-		PromotionManager->drain_stacks...
+		threads' stacks. PromotionManager->drain_stacks...
 		2. process found references. This will be accomplished by the
 		reference processor (check referenceProcessor.[h|c]pp) using
 		several different closures to define the appropriate behaviour
 		in a number of situations. I believe that these clusures define
 		the GC implementation (since the referenceProcessor algorithms
-		are shared).
+		are shared). Check the code for comments to find where 
+		references are being traversed.
 		3. TODO - how unreachable objects are cleaned?
 
 	TODO - comment the three closures used!

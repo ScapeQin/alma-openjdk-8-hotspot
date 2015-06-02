@@ -189,7 +189,7 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     // For PrintGCDetails
     size_t old_gen_prev_used = old_gen->used_in_bytes();
     size_t young_gen_prev_used = young_gen->used_in_bytes();
-
+    
     allocate_stacks();
 
     COMPILER2_PRESENT(DerivedPointerTable::clear());
@@ -197,6 +197,8 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     ref_processor()->enable_discovery(true /*verify_disabled*/, true /*verify_no_refs*/);
     ref_processor()->setup_policy(clear_all_softrefs);
 
+    // <underscore> this is where it gets started.
+    
     mark_sweep_phase1(clear_all_softrefs);
 
     mark_sweep_phase2();

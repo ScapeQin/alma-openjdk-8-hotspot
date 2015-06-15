@@ -1289,7 +1289,9 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
   SerialOldTracer* gc_tracer = G1MarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gc_cause(), gc_timer->gc_start());
-
+  // <underscore> this is how they signal the start of the GC operation. The 
+  // end of it is signaled using the destructor of this object (that is 
+  // automatically killed when the method returns).
   SvcGCMarker sgcm(SvcGCMarker::FULL);
   ResourceMark rm;
 

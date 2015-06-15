@@ -5,6 +5,8 @@ src
 | | | | universe.hpp
 | | | | referenceProcessir.[h|c]pp
 | | | gc_implementation
+| | | | g1
+| | | | | g1CollectedHeap.[h|c]pp
 | | | | parallelScavenge
 | | | | | psScavenge.[c|h]pp
 | | | | | parallelScavengeHeap.hpp
@@ -22,6 +24,11 @@ Terms:
 
 Side notes:
  - there is one promotion manager per GC worker thread.
+
+g1CollectedHeap.[h|c]pp
+	I believe this is the most important class in this garbage collector.
+	It contains many important information regarding the heap and more. For
+	example, the list of regions is held in a variable named '_hrs'.
 
 parallelScavengeHeap.hpp
 	A heap for the parallelScavenge GC (inherits from Collected Heap).

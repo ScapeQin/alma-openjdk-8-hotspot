@@ -24,11 +24,23 @@ Terms:
 
 Side notes:
  - there is one promotion manager per GC worker thread.
+ - investigate this as a way to setup the heap after transferring the data:
+	set_universe_heap (memoryService.cpp) 
+	<- universe_post_init (universe.cpp) 
+	<- init_globals (init.cpp) 
+	<- create_vm (thread.cpp)
 
 g1CollectedHeap.[h|c]pp
 	I believe this is the most important class in this garbage collector.
 	It contains many important information regarding the heap and more. For
 	example, the list of regions is held in a variable named '_hrs'.
+	-> do_collection_pause_at_safepoint (SvcGCMarker::MINOR)
+	-> do_collection (SvcGCMarker::FULL), this will eventually call a 
+	MarkSweep implementation (is this full collection?).
+	-> checkpointRootsFinal (SvcGCMarker::OTHER), called from 
+	concurrentMarkThread
+	-> heap, this is a getter for the G1CollectedHeap. It might be my way
+	in the G1.
 
 parallelScavengeHeap.hpp
 	A heap for the parallelScavenge GC (inherits from Collected Heap).

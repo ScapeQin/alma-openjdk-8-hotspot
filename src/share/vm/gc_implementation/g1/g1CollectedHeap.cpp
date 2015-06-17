@@ -3855,6 +3855,10 @@ void G1CollectedHeap::log_gc_header() {
     .append(g1_policy()->gcs_are_young() ? "(young)" : "(mixed)")
     .append(g1_policy()->during_initial_mark_pause() ? " (initial-mark)" : "");
 
+  /* <underscore> */
+  gclog_or_tty->print("<underscore> %p", heap());
+  /* </underscore> */
+  
   gclog_or_tty->print("[%s", (const char*)gc_cause_str);
 }
 

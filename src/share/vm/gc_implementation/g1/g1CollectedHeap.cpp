@@ -1986,6 +1986,10 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   NOT_PRODUCT(reset_evacuation_should_fail();)
 
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
+  
+  /* <underscore> */
+  gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
+  /* </underscore> */
 }
 
 jint G1CollectedHeap::initialize() {
@@ -3854,10 +3858,6 @@ void G1CollectedHeap::log_gc_header() {
   GCCauseString gc_cause_str = GCCauseString("GC pause", gc_cause())
     .append(g1_policy()->gcs_are_young() ? "(young)" : "(mixed)")
     .append(g1_policy()->during_initial_mark_pause() ? " (initial-mark)" : "");
-
-  /* <underscore> */
-  gclog_or_tty->print("<underscore> %p", heap());
-  /* </underscore> */
   
   gclog_or_tty->print("[%s", (const char*)gc_cause_str);
 }

@@ -4050,6 +4050,17 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
         g1_policy()->finalize_cset(target_pause_time_ms, evacuation_info);
 
+        /* <underscore> */
+        gclog_or_tty->print("<underscore> New CSet: ");
+        HeapRegion* r = g1_policy()->collection_set();
+        while (r != NULL) {
+          HeapRegion* next = r->next_in_collection_set();
+          gclog_or_tty->print(" %u ", r->hrs_index());
+          r = next;
+        }
+        gclog_or_tty->print("\n");
+        /* </underscore> */
+        
         _cm->note_start_of_gc();
         // We should not verify the per-thread SATB buffers given that
         // we have not filtered them yet (we'll do so during the

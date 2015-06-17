@@ -7,6 +7,7 @@ src
 | | | gc_implementation
 | | | | g1
 | | | | | g1CollectedHeap.[h|c]pp
+| | | | | g1CollectorPolicy.[h|c]pp
 | | | | parallelScavenge
 | | | | | psScavenge.[c|h]pp
 | | | | | parallelScavengeHeap.hpp
@@ -35,12 +36,19 @@ g1CollectedHeap.[h|c]pp
 	It contains many important information regarding the heap and more. For
 	example, the list of regions is held in a variable named '_hrs'.
 	-> do_collection_pause_at_safepoint (SvcGCMarker::MINOR)
+	-> evacuate_collection_set (called from 
+	do_collection_pause_at_safepoint).
 	-> do_collection (SvcGCMarker::FULL), this will eventually call a 
 	MarkSweep implementation (is this full collection?).
 	-> checkpointRootsFinal (SvcGCMarker::OTHER), called from 
 	concurrentMarkThread
 	-> heap, this is a getter for the G1CollectedHeap. It might be my way
 	in the G1.
+
+g1CollectorPolicy.[h|c]pp
+	This is where the statistics are agregated and some important decisions
+	are taken.
+	-> finalize_cset (chooses a new collection set!)
 
 parallelScavengeHeap.hpp
 	A heap for the parallelScavenge GC (inherits from Collected Heap).

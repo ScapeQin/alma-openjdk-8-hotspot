@@ -4053,12 +4053,15 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         /* <underscore> */
         gclog_or_tty->print("<underscore> New CSet: ");
         HeapRegion* r = g1_policy()->collection_set();
+        int hcount = 0;
         while (r != NULL) {
           HeapRegion* next = r->next_in_collection_set();
-          gclog_or_tty->print(" %u ", r->hrs_index());
+          // gclog_or_tty->print(" %u ", r->hrs_index());
+          hcount++;
           r = next;
         }
-        gclog_or_tty->print("\n");
+        gclog_or_tty->print("%d regions to collect.\n", hcount);
+        heap()->print();
         /* </underscore> */
         
         _cm->note_start_of_gc();

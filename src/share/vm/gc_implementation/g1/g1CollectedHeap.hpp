@@ -1293,6 +1293,10 @@ public:
   // Asks the heap to prepare for migration. - rodrigo
   virtual void prepare_migration() {
     printf("INSIDE G1!\n");
+    // TODO - check policy, how it chooses the regions to collect.
+    // TODO - should I be already in a safepoint? Check the code.
+    do_collection_pause_at_safepoint(1000);
+    // step 2 - iterate free list and check their addresses.
   }
 
   // The same as above but assume that the caller holds the Heap_lock.

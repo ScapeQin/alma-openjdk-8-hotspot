@@ -8,6 +8,7 @@ src
 | | | | g1
 | | | | | g1CollectedHeap.[h|c]pp
 | | | | | g1CollectorPolicy.[h|c]pp
+| | | | | collectionSetChooser.[h|c]pp
 | | | | parallelScavenge
 | | | | | psScavenge.[c|h]pp
 | | | | | parallelScavengeHeap.hpp
@@ -49,6 +50,10 @@ g1CollectorPolicy.[h|c]pp
 	This is where the statistics are agregated and some important decisions
 	are taken.
 	-> finalize_cset (chooses a new collection set!)
+
+collectionSetChooser.[h|c]pp
+	This is the class that manages and orders regions that will be selected
+	for the collection_set. See order_regions.
 
 parallelScavengeHeap.hpp
 	A heap for the parallelScavenge GC (inherits from Collected Heap).

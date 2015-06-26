@@ -4937,6 +4937,20 @@ class C2 extends C1 implements I2 {
       <errors>
       </errors>
     </function>
+    
+    <function id="PrepareMigration" num="156">
+      <synopsis>Prepare JVM Migration</synopsis>
+      <description>
+        TODO - documentation. - underscore
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+      </parameters>
+      <errors>
+      </errors>
+    </function>
 
 
   </category>

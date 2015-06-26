@@ -1698,6 +1698,11 @@ JvmtiEnv::ForceGarbageCollection() {
   return JVMTI_ERROR_NONE;
 } /* end ForceGarbageCollection */
 
+jvmtiError
+JvmtiEnv::PrepareMigration() {
+  Universe::heap()->collect(GCCause::_jvmti_force_gc);
+  return JVMTI_ERROR_NONE;
+} /* end PrepareMigration */
 
   //
   // Heap (1.0) functions

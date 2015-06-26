@@ -4061,7 +4061,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           r = next;
         }
         gclog_or_tty->print("%d regions to collect.\n", hcount);
-        heap()->print();
         /* </underscore> */
         
         _cm->note_start_of_gc();

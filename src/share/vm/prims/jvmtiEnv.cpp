@@ -1700,9 +1700,13 @@ JvmtiEnv::ForceGarbageCollection() {
 
 jvmtiError
 JvmtiEnv::PrepareMigration() {
-  Universe::heap()->collect(GCCause::_jvmti_force_gc);
-  return JVMTI_ERROR_NONE;
+  if (Universe::heap()->kind() != CollectedHeap::G1CollectedHeap) {
+    // TODO - error, not a G1 heap.
+    printf("Not a G1 heap...\n");
+  }
+  Universe::heap()->prepare_migration();
 } /* end PrepareMigration */
+
 
   //
   // Heap (1.0) functions

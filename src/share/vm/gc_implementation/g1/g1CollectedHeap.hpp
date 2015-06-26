@@ -1290,6 +1290,11 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
 
+  // Asks the heap to prepare for migration. - rodrigo
+  virtual void prepare_migration() {
+    printf("INSIDE G1!\n");
+  }
+
   // The same as above but assume that the caller holds the Heap_lock.
   void collect_locked(GCCause::Cause cause);
 

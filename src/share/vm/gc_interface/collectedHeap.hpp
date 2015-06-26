@@ -477,6 +477,10 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // the context of the vm thread.
   virtual void collect_as_vm_thread(GCCause::Cause cause);
 
+  // This method asks the heap to prepare for migration.
+  // Only the G1GC should override this method, for now. - underscore
+  virtual void prepare_migration() { }
+  
   // Returns the barrier set for this heap
   BarrierSet* barrier_set() { return _barrier_set; }
 

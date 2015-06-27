@@ -1699,12 +1699,12 @@ JvmtiEnv::ForceGarbageCollection() {
 } /* end ForceGarbageCollection */
 
 jvmtiError
-JvmtiEnv::PrepareMigration() {
+JvmtiEnv::PrepareMigration(jlong bandwidth) {
   if (Universe::heap()->kind() != CollectedHeap::G1CollectedHeap) {
     // TODO - error, not a G1 heap.
     printf("Not a G1 heap...\n");
   }
-  Universe::heap()->prepare_migration();
+  Universe::heap()->prepare_migration(bandwidth);
 } /* end PrepareMigration */
 
 

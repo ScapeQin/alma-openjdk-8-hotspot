@@ -479,7 +479,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   // This method asks the heap to prepare for migration.
   // Only the G1GC should override this method, for now. - underscore
-  virtual void prepare_migration() { }
+  virtual void prepare_migration(jlong bandwidth) { }
   
   // Returns the barrier set for this heap
   BarrierSet* barrier_set() { return _barrier_set; }

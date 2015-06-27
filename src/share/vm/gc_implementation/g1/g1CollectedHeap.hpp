@@ -486,6 +486,9 @@ private:
 
 protected:
 
+  // <underscore> Minimum migration bandiwdth.
+  jlong _min_migration_bandwidth;
+    
   // The young region list.
   YoungList*  _young_list;
 
@@ -1289,14 +1292,17 @@ public:
   // "System.gc".  This probably implies as full a collection as the
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
-
+  
   // Asks the heap to prepare for migration. - rodrigo
-  virtual void prepare_migration() {
-    printf("INSIDE G1!\n");
+  virtual void prepare_migration(jlong bandwidth) {
+    printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
+    //_min_migration_bandwidth = bandwidth;
     // TODO - check policy, how it chooses the regions to collect.
     // TODO - should I be already in a safepoint? Check the code.
-    do_collection_pause_at_safepoint(1000);
+    //      - if we are not in a safepoint, check how the forced GC works.
+    //do_collection_pause_at_safepoint(1000);
     // step 2 - iterate free list and check their addresses.
+    //_min_migration_bandwidth = 0;
   }
 
   // The same as above but assume that the caller holds the Heap_lock.

@@ -1937,6 +1937,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _old_set("Old Set"),
   _humongous_set("Master Humongous Set"),
   _free_regions_coming(false),
+  _min_migration_bandwidth(0), // <underscore> added initialization.
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -4048,7 +4049,16 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         g1_policy()->print_collection_set(g1_policy()->inc_cset_head(), gclog_or_tty);
 #endif // YOUNG_LIST_VERBOSE
 
-        g1_policy()->finalize_cset(target_pause_time_ms, evacuation_info);
+        
+        // <underscore> IF introduced to select the correct cset construction.
+        if (_min_migration_bandwidth > 0) {
+          g1_policy()->finalize_cset_for_migration(_min_migration_bandwidth, 
+                                                   evacuation_info);
+        }
+        else {
+          g1_policy()->finalize_cset(target_pause_time_ms, evacuation_info);
+        }
+        // </underscore>
 
         /* <underscore> */
         gclog_or_tty->print("<underscore> New CSet: ");

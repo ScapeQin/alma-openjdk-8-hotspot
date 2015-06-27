@@ -4947,6 +4947,12 @@ class C2 extends C1 implements I2 {
       <capabilities>
       </capabilities>
       <parameters>
+	<param id="bandwdith">
+	  <jlong min="0"/>
+	    <description>
+	      Minimum GC efficiency.
+	    </description>
+	</param>
       </parameters>
       <errors>
       </errors>

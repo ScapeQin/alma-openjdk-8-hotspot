@@ -2014,8 +2014,223 @@ void G1CollectorPolicy::finalize_cset(double target_pause_time_ms, EvacuationInf
   // Set the start of the non-young choice time.
   double non_young_start_time_sec = young_end_time_sec;
 
+  // <underscore> if GC set should include non-young regions.
   if (!gcs_are_young()) {
     CollectionSetChooser* cset_chooser = _collectionSetChooser;
+    // <underscore> check if cset if sorted
+    cset_chooser->verify();
+    const uint min_old_cset_length = calc_min_old_cset_length();
+    const uint max_old_cset_length = calc_max_old_cset_length();
+
+    uint expensive_region_num = 0;
+    bool check_time_remaining = adaptive_young_list_length();
+
+    HeapRegion* hr = cset_chooser->peek();
+    while (hr != NULL) {
+      if (old_cset_region_length() >= max_old_cset_length) {
+        // Added maximum number of old regions to the CSet.
+        ergo_verbose2(ErgoCSetConstruction,
+                      "finish adding old regions to CSet",
+                      ergo_format_reason("old CSet region num reached max")
+                      ergo_format_region("old")
+                      ergo_format_region("max"),
+                      old_cset_region_length(), max_old_cset_length);
+        break;
+      }
+
+
+      // Stop adding regions if the remaining reclaimable space is
+      // not above G1HeapWastePercent.
+      size_t reclaimable_bytes = cset_chooser->remaining_reclaimable_bytes();
+      double reclaimable_perc = reclaimable_bytes_perc(reclaimable_bytes);
+      double threshold = (double) G1HeapWastePercent;
+      if (reclaimable_perc <= threshold) {
+        // We've added enough old regions that the amount of uncollected
+        // reclaimable space is at or below the waste threshold. Stop
+        // adding old regions to the CSet.
+        ergo_verbose5(ErgoCSetConstruction,
+                      "finish adding old regions to CSet",
+                      ergo_format_reason("reclaimable percentage not over threshold")
+                      ergo_format_region("old")
+                      ergo_format_region("max")
+                      ergo_format_byte_perc("reclaimable")
+                      ergo_format_perc("threshold"),
+                      old_cset_region_length(),
+                      max_old_cset_length,
+                      reclaimable_bytes,
+                      reclaimable_perc, threshold);
+        break;
+      }
+
+      double predicted_time_ms = predict_region_elapsed_time_ms(hr, gcs_are_young());
+      if (check_time_remaining) {
+        if (predicted_time_ms > time_remaining_ms) {
+          // Too expensive for the current CSet.
+
+          if (old_cset_region_length() >= min_old_cset_length) {
+            // We have added the minimum number of old regions to the CSet,
+            // we are done with this CSet.
+            ergo_verbose4(ErgoCSetConstruction,
+                          "finish adding old regions to CSet",
+                          ergo_format_reason("predicted time is too high")
+                          ergo_format_ms("predicted time")
+                          ergo_format_ms("remaining time")
+                          ergo_format_region("old")
+                          ergo_format_region("min"),
+                          predicted_time_ms, time_remaining_ms,
+                          old_cset_region_length(), min_old_cset_length);
+            break;
+          }
+
+          // We'll add it anyway given that we haven't reached the
+          // minimum number of old regions.
+          expensive_region_num += 1;
+        }
+      } else {
+        if (old_cset_region_length() >= min_old_cset_length) {
+          // In the non-auto-tuning case, we'll finish adding regions
+          // to the CSet if we reach the minimum.
+          ergo_verbose2(ErgoCSetConstruction,
+                        "finish adding old regions to CSet",
+                        ergo_format_reason("old CSet region num reached min")
+                        ergo_format_region("old")
+                        ergo_format_region("min"),
+                        old_cset_region_length(), min_old_cset_length);
+          break;
+        }
+      }
+
+      // We will add this region to the CSet.
+      time_remaining_ms = MAX2(time_remaining_ms - predicted_time_ms, 0.0);
+      predicted_pause_time_ms += predicted_time_ms;
+      cset_chooser->remove_and_move_to_next(hr);
+      _g1->old_set_remove(hr);
+      add_old_region_to_cset(hr);
+
+      hr = cset_chooser->peek();
+    }
+    if (hr == NULL) {
+      ergo_verbose0(ErgoCSetConstruction,
+                    "finish adding old regions to CSet",
+                    ergo_format_reason("candidate old regions not available"));
+    }
+
+    if (expensive_region_num > 0) {
+      // We print the information once here at the end, predicated on
+      // whether we added any apparently expensive regions or not, to
+      // avoid generating output per region.
+      ergo_verbose4(ErgoCSetConstruction,
+                    "added expensive regions to CSet",
+                    ergo_format_reason("old CSet region num not reached min")
+                    ergo_format_region("old")
+                    ergo_format_region("expensive")
+                    ergo_format_region("min")
+                    ergo_format_ms("remaining time"),
+                    old_cset_region_length(),
+                    expensive_region_num,
+                    min_old_cset_length,
+                    time_remaining_ms);
+    }
+
+    cset_chooser->verify();
+  }
+
+  stop_incremental_cset_building();
+
+  ergo_verbose5(ErgoCSetConstruction,
+                "finish choosing CSet",
+                ergo_format_region("eden")
+                ergo_format_region("survivors")
+                ergo_format_region("old")
+                ergo_format_ms("predicted pause time")
+                ergo_format_ms("target pause time"),
+                eden_region_length, survivor_region_length,
+                old_cset_region_length(),
+                predicted_pause_time_ms, target_pause_time_ms);
+
+  double non_young_end_time_sec = os::elapsedTime();
+  phase_times()->record_non_young_cset_choice_time_ms((non_young_end_time_sec - non_young_start_time_sec) * 1000.0);
+  evacuation_info.set_collectionset_regions(cset_region_length());
+}
+/* <underscore> Function introduced to select regions for migration. */
+void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidth, EvacuationInfo& evacuation_info) {
+  // TODO - remote target_pause_time_ms
+  double target_pause_time_ms = 1000;
+  double young_start_time_sec = os::elapsedTime();
+
+  YoungList* young_list = _g1->young_list();
+  finalize_incremental_cset_building();
+
+  guarantee(target_pause_time_ms > 0.0,
+            err_msg("target_pause_time_ms = %1.6lf should be positive",
+                    target_pause_time_ms));
+  guarantee(_collection_set == NULL, "Precondition");
+
+  double base_time_ms = predict_base_elapsed_time_ms(_pending_cards);
+  double predicted_pause_time_ms = base_time_ms;
+  double time_remaining_ms = MAX2(target_pause_time_ms - base_time_ms, 0.0);
+
+  ergo_verbose4(ErgoCSetConstruction | ErgoHigh,
+                "start choosing CSet",
+                ergo_format_size("_pending_cards")
+                ergo_format_ms("predicted base time")
+                ergo_format_ms("remaining time")
+                ergo_format_ms("target pause time"),
+                _pending_cards, base_time_ms, time_remaining_ms, target_pause_time_ms);
+
+  _last_gc_was_young = gcs_are_young() ? true : false;
+
+  if (_last_gc_was_young) {
+    _trace_gen0_time_data.increment_young_collection_count();
+  } else {
+    _trace_gen0_time_data.increment_mixed_collection_count();
+  }
+
+  // The young list is laid with the survivor regions from the previous
+  // pause are appended to the RHS of the young list, i.e.
+  //   [Newly Young Regions ++ Survivors from last pause].
+
+  uint survivor_region_length = young_list->survivor_length();
+  uint eden_region_length = young_list->length() - survivor_region_length;
+  init_cset_region_lengths(eden_region_length, survivor_region_length);
+
+  HeapRegion* hr = young_list->first_survivor_region();
+  while (hr != NULL) {
+    assert(hr->is_survivor(), "badly formed young list");
+    hr->set_young();
+    hr = hr->get_next_young_region();
+  }
+
+  // Clear the fields that point to the survivor list - they are all young now.
+  young_list->clear_survivors();
+
+  _collection_set = _inc_cset_head;
+  _collection_set_bytes_used_before = _inc_cset_bytes_used_before;
+  time_remaining_ms = MAX2(time_remaining_ms - _inc_cset_predicted_elapsed_time_ms, 0.0);
+  predicted_pause_time_ms += _inc_cset_predicted_elapsed_time_ms;
+
+  ergo_verbose3(ErgoCSetConstruction | ErgoHigh,
+                "add young regions to CSet",
+                ergo_format_region("eden")
+                ergo_format_region("survivors")
+                ergo_format_ms("predicted young region time"),
+                eden_region_length, survivor_region_length,
+                _inc_cset_predicted_elapsed_time_ms);
+
+  // The number of recorded young regions is the incremental
+  // collection set's current size
+  set_recorded_rs_lengths(_inc_cset_recorded_rs_lengths);
+
+  double young_end_time_sec = os::elapsedTime();
+  phase_times()->record_young_cset_choice_time_ms((young_end_time_sec - young_start_time_sec) * 1000.0);
+
+  // Set the start of the non-young choice time.
+  double non_young_start_time_sec = young_end_time_sec;
+
+  // <underscore> if GC set should include non-young regions.
+  if (!gcs_are_young()) {
+    CollectionSetChooser* cset_chooser = _collectionSetChooser;
+    // <underscore> check if cset if sorted
     cset_chooser->verify();
     const uint min_old_cset_length = calc_min_old_cset_length();
     const uint max_old_cset_length = calc_max_old_cset_length();

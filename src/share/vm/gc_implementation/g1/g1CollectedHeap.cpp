@@ -1275,6 +1275,9 @@ void G1CollectedHeap::print_hrs_post_compaction() {
   heap_region_iterate(&cl);
 }
 
+// <underscore> this a a full collection. A very quick view of the code and it
+// seems that they stop the concurrent marking threads, launch a global mark
+// and sweep and clean the whole heap. This is not what we want!
 bool G1CollectedHeap::do_collection(bool explicit_gc,
                                     bool clear_all_soft_refs,
                                     size_t word_size) {
@@ -2407,6 +2410,7 @@ bool G1CollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
     case GCCause::_gc_locker:               return GCLockerInvokesConcurrent;
     case GCCause::_java_lang_system_gc:     return ExplicitGCInvokesConcurrent;
     case GCCause::_g1_humongous_allocation: return true;
+    case GCCause::_prepare_migration:       return false;
     default:                                return false;
   }
 }
@@ -2533,6 +2537,7 @@ G1YCType G1CollectedHeap::yc_type() {
   }
 }
 
+// <underscore> GC main entry point.
 void G1CollectedHeap::collect(GCCause::Cause cause) {
   assert_heap_not_locked();
 
@@ -2552,6 +2557,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
     }
 
     if (should_do_concurrent_full_gc(cause)) {
+      // <underscore> I believe this is the most common path.
       // Schedule an initial-mark evacuation pause that will start a
       // concurrent cycle. We're setting word_size to 0 which means that
       // we are not requesting a post-GC allocation.
@@ -2590,6 +2596,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
                                    cause);
         VMThread::execute(&op);
       } else {
+        // <underscore> this will trigger a global mark sweep.  
         // Schedule a Full GC.
         VM_G1CollectFull op(gc_count_before, old_marking_count_before, cause);
         VMThread::execute(&op);

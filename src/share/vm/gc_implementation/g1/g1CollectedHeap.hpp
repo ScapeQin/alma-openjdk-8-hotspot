@@ -1298,9 +1298,16 @@ public:
     printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
     //_min_migration_bandwidth = bandwidth;
     // TODO - check policy, how it chooses the regions to collect.
-    // TODO - should I be already in a safepoint? Check the code.
-    //      - if we are not in a safepoint, check how the forced GC works.
-    //do_collection_pause_at_safepoint(1000);
+    
+    // TODO - I have to make a decision. Either to go for an initial-mark 
+    // evacuation pause or not. This may improve the precision of the GC 
+    // efficiency estimates but it might take some time. For now, this GC cause
+    // will NOT trigger a mark pause.
+    // TODO - I would like to have the GC cause accessible inside the 
+    // do_collection_pause_at_safepoint to be able to direct the call to the
+    // correct cset_ finalizer.
+    collect(GCCause::_prepare_migration);
+    
     // step 2 - iterate free list and check their addresses.
     //_min_migration_bandwidth = 0;
   }

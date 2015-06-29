@@ -110,6 +110,9 @@ void VM_G1IncCollectionPause::doit() {
   }
 
   GCCauseSetter x(g1h, _gc_cause);
+
+  printf("Initiate Conc Mark ? %s\n", _should_initiate_conc_mark ? "T" : "F");
+
   if (_should_initiate_conc_mark) {
     // It's safer to read old_marking_cycles_completed() here, given
     // that noone else will be updating it concurrently. Since we'll

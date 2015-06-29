@@ -34,6 +34,7 @@ Side notes:
  - all young regions are selected for the collection set. Old regions are 
    selected if they have already been marked (they have a value for 
    gc_efficiency).
+ - internal G1 GCs are called using VM operations (check vm_operations_g1.cpp)
 
 g1CollectedHeap.[h|c]pp
 	I believe this is the most important class in this garbage collector.

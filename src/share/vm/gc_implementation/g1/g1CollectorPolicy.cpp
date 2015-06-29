@@ -2016,8 +2016,11 @@ void G1CollectorPolicy::finalize_cset(double target_pause_time_ms, EvacuationInf
 
   // <underscore> if GC set should include non-young regions.
   if (!gcs_are_young()) {
+    // <underscore> DEBUG!
+      printf("MIXED GC\n");
+    // </underscore>
     CollectionSetChooser* cset_chooser = _collectionSetChooser;
-    // <underscore> check if cset if sorted
+    // <underscore> check if cset is sorted
     cset_chooser->verify();
     const uint min_old_cset_length = calc_min_old_cset_length();
     const uint max_old_cset_length = calc_max_old_cset_length();
@@ -2134,6 +2137,11 @@ void G1CollectorPolicy::finalize_cset(double target_pause_time_ms, EvacuationInf
 
     cset_chooser->verify();
   }
+  // <underscore> DEBUG!
+  else {
+      printf("YOUNG GC\n");
+  }
+  // </underscore>
 
   stop_incremental_cset_building();
 
@@ -2227,10 +2235,15 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
   // Set the start of the non-young choice time.
   double non_young_start_time_sec = young_end_time_sec;
 
-  // <underscore> if GC set should include non-young regions.
+  // <underscore> if GC set should include non-young regions (mixed collection).
+  // Going for young or mixed GCs is decided at the end of each minor collection
+  // based on the expectations of the benefits coming from collecting old 
+  // regions.
+  // For now, I will ignore this check and try to look into the collection 
+  // chooser for old regions worth to collect.
   if (!gcs_are_young()) {
     CollectionSetChooser* cset_chooser = _collectionSetChooser;
-    // <underscore> check if cset if sorted
+    // <underscore> check if cset is sorted
     cset_chooser->verify();
     const uint min_old_cset_length = calc_min_old_cset_length();
     const uint max_old_cset_length = calc_max_old_cset_length();

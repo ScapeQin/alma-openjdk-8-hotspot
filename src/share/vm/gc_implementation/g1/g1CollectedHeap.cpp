@@ -4068,16 +4068,21 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // </underscore>
 
         /* <underscore> */
-        gclog_or_tty->print("<underscore> New CSet: ");
-        HeapRegion* r = g1_policy()->collection_set();
-        int hcount = 0;
-        while (r != NULL) {
-          HeapRegion* next = r->next_in_collection_set();
-          // gclog_or_tty->print(" %u ", r->hrs_index());
-          hcount++;
-          r = next;
+        {
+          gclog_or_tty->print("<underscore> New CSet: ");
+          HeapRegion* r = g1_policy()->collection_set();
+          double gc_efficiency = 0;
+          int hcount = 1;
+          while (r != NULL) {
+            gc_efficiency = r->gc_efficiency();
+            HeapRegion* next = r->next_in_collection_set();
+          
+            // gclog_or_tty->print(" %u ", r->hrs_index());
+            hcount++;
+            r = next;
+          }
+          gclog_or_tty->print("%d regions to collect. Min efficiency %f\n", hcount, gc_efficiency);
         }
-        gclog_or_tty->print("%d regions to collect.\n", hcount);
         /* </underscore> */
         
         _cm->note_start_of_gc();

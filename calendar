@@ -7,6 +7,9 @@ Study Implementation	: 08-31 June
 	Check JVM Tool Interface
 	Try jvisualvm + visualgc
 	Try SPECjvm2008
+	Try criu
+	Study Algorithm
+	Try DaCapo benchmarks
 Source Reading		: 01-07 June
 
 Ideas:
@@ -16,11 +19,11 @@ limit to start migration.
 management leading to smaller transmission overhead (transmitting unused space).
 
 Algorithm:
-	- start Migation
-		- migrate code cache, perm gen, all stuff that can be migrated
+	- start Migation (using criu?)
+		- migrate every thing but the heap (code cache, perm gen, all stuff that can be migrated)
 		- get bandwidth (can be calculated in the prev step)
 		- get occupance distribution (G1 statistics)
-	- stop application
+	-stop application
 		- a) regions with > X% occupied can be transmitted
 		- b) regions with < X% or young are scheduled for GC
 			- transmit final regions (make sure that objects are not

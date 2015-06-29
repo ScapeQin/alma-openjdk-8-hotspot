@@ -31,6 +31,9 @@ Side notes:
 	<- universe_post_init (universe.cpp) 
 	<- init_globals (init.cpp) 
 	<- create_vm (thread.cpp)
+ - all young regions are selected for the collection set. Old regions are 
+   selected if they have already been marked (they have a value for 
+   gc_efficiency).
 
 g1CollectedHeap.[h|c]pp
 	I believe this is the most important class in this garbage collector.

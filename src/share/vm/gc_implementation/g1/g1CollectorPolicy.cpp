@@ -1481,6 +1481,7 @@ bool G1CollectorPolicy::force_initial_mark_if_outside_cycle(
   }
 }
 
+// <underscore> this is where it goes if we force a collect to start a conc mark.
 void
 G1CollectorPolicy::decide_on_conc_mark_initiation() {
   // We are about to decide on whether this pause will be an

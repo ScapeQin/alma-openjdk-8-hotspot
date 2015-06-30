@@ -1296,8 +1296,7 @@ public:
   // Asks the heap to prepare for migration. - rodrigo
   virtual void prepare_migration(jlong bandwidth) {
     printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
-    //_min_migration_bandwidth = bandwidth;
-    // TODO - check policy, how it chooses the regions to collect.
+    _min_migration_bandwidth = bandwidth;
     
     // TODO - I have to make a decision. Either to go for an initial-mark 
     // evacuation pause or not. This may improve the precision of the GC 
@@ -1309,7 +1308,7 @@ public:
     collect(GCCause::_prepare_migration);
     
     // step 2 - iterate free list and check their addresses.
-    //_min_migration_bandwidth = 0;
+    _min_migration_bandwidth = 0;
   }
 
   // The same as above but assume that the caller holds the Heap_lock.

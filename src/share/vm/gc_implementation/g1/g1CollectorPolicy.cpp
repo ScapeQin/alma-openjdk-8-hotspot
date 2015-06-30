@@ -2154,6 +2154,7 @@ void G1CollectorPolicy::finalize_cset(double target_pause_time_ms, EvacuationInf
 }
 /* <underscore> Function introduced to select regions for migration. */
 void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidth, EvacuationInfo& evacuation_info) {
+  printf("INSIDE finalize_cset_for_migration!\n");
   // TODO - remote target_pause_time_ms
   double target_pause_time_ms = 1000;
   double young_start_time_sec = os::elapsedTime();
@@ -2161,9 +2162,6 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
   YoungList* young_list = _g1->young_list();
   finalize_incremental_cset_building();
 
-  guarantee(target_pause_time_ms > 0.0,
-            err_msg("target_pause_time_ms = %1.6lf should be positive",
-                    target_pause_time_ms));
   guarantee(_collection_set == NULL, "Precondition");
 
   double base_time_ms = predict_base_elapsed_time_ms(_pending_cards);
@@ -2178,6 +2176,7 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
                 ergo_format_ms("target pause time"),
                 _pending_cards, base_time_ms, time_remaining_ms, target_pause_time_ms);
 
+  /* <underscore> TODO - need to force mixed GC. */
   _last_gc_was_young = gcs_are_young() ? true : false;
 
   if (_last_gc_was_young) {
@@ -2231,20 +2230,24 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
   // Going for young or mixed GCs is decided at the end of each minor collection
   // based on the expectations of the benefits coming from collecting old 
   // regions.
-  // For now, I will ignore this check and try to look into the collection 
-  // chooser for old regions worth to collect.
+  // For now, I will force through this check and try to look into the 
+  // collection chooser for old regions worth to collect.
+  /* <underscore> TODO - need to force mixed GC. */
   if (!gcs_are_young()) {
     CollectionSetChooser* cset_chooser = _collectionSetChooser;
     // <underscore> check if cset is sorted
     cset_chooser->verify();
+    // <underscore> not needed.
     const uint min_old_cset_length = calc_min_old_cset_length();
     const uint max_old_cset_length = calc_max_old_cset_length();
+    // </underscore> not needed.
 
     uint expensive_region_num = 0;
     bool check_time_remaining = adaptive_young_list_length();
 
     HeapRegion* hr = cset_chooser->peek();
     while (hr != NULL) {
+      /* <underscore> not needed. Conditions that I do not want for now.
       if (old_cset_region_length() >= max_old_cset_length) {
         // Added maximum number of old regions to the CSet.
         ergo_verbose2(ErgoCSetConstruction,
@@ -2255,6 +2258,7 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
                       old_cset_region_length(), max_old_cset_length);
         break;
       }
+      
 
 
       // Stop adding regions if the remaining reclaimable space is
@@ -2279,8 +2283,11 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
                       reclaimable_perc, threshold);
         break;
       }
+      */
 
       double predicted_time_ms = predict_region_elapsed_time_ms(hr, gcs_are_young());
+      
+      /* <underscore> not needed. Conditions that I do not want for now.
       if (check_time_remaining) {
         if (predicted_time_ms > time_remaining_ms) {
           // Too expensive for the current CSet.
@@ -2317,6 +2324,14 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
           break;
         }
       }
+      */
+        
+      // <underscore> We stop adding old regions if the efficiency falls below
+      // the network bandwidth.
+      // TODO - check if all the following regions have worse efficiency!
+        if(hr->gc_efficiency() < min_migration_bandwidth) {
+           break;
+        }
 
       // We will add this region to the CSet.
       time_remaining_ms = MAX2(time_remaining_ms - predicted_time_ms, 0.0);

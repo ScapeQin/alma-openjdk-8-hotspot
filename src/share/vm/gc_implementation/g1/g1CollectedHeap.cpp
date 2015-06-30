@@ -2584,7 +2584,9 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
         }
       }
     } else {
-      if (cause == GCCause::_gc_locker
+      if (cause == GCCause::_gc_locker 
+          /* <underscore> support for migration w/ no conc_mark. */
+          || cause == GCCause::_prepare_migration
           DEBUG_ONLY(|| cause == GCCause::_scavenge_alot)) {
 
         // Schedule a standard evacuation pause. We're setting word_size

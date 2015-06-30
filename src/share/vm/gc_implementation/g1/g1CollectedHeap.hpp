@@ -1300,8 +1300,7 @@ public:
     
     // TODO - I have to make a decision. Either to go for an initial-mark 
     // evacuation pause or not. This may improve the precision of the GC 
-    // efficiency estimates but it might take some time. For now, this GC cause
-    // will NOT trigger a mark pause.
+    // efficiency estimates but it might take some time. 
     // TODO - I would like to have the GC cause accessible inside the 
     // do_collection_pause_at_safepoint to be able to direct the call to the
     // correct cset_ finalizer.

@@ -1705,6 +1705,7 @@ JvmtiEnv::PrepareMigration(jlong bandwidth) {
     printf("Not a G1 heap...\n");
   }
   Universe::heap()->prepare_migration(bandwidth);
+  return JVMTI_ERROR_NONE;
 } /* end PrepareMigration */
 
 

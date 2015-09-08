@@ -562,6 +562,10 @@ G1CollectedHeap::new_region_try_secondary_free_list() {
   return NULL;
 }
 
+// <underscore> This is an important method to analyze how regions are selected!.
+// <underscore> This is definitely the main function to allocate regions.
+// TODO - order main free list. Two ops to take into account: expand, second free
+// list append
 HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
   assert(!isHumongous(word_size) || word_size <= HeapRegion::GrainWords,
          "the only time we use this to allocate a humongous region is "
@@ -576,7 +580,9 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
       }
       res = new_region_try_secondary_free_list();
       if (res != NULL) {
-        return res;
+        // <underscore> added print
+        gclog_or_tty->print_cr("[new_region] "PTR_FORMAT" "PTR_FORMAT"", res->bottom(), res->end());
+        return res; // <underscore> added print
       }
     }
   }
@@ -613,7 +619,9 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
       _expand_heap_after_alloc_failure = false;
     }
   }
-  return res;
+  // <underscore> added print
+  gclog_or_tty->print_cr("[new_region] "PTR_FORMAT" "PTR_FORMAT"", res->bottom(), res->end());
+  return res; 
 }
 
 uint G1CollectedHeap::humongous_obj_allocate_find_first(uint num_regions,
@@ -1777,6 +1785,8 @@ void G1CollectedHeap::update_committed_space(HeapWord* old_end,
   _cg1r->hot_card_cache()->resize_card_counts(capacity());
 }
 
+// <underscore> Method that expands the heap size by at least 'expand_bytes'.
+// New regions go into the main free list.
 bool G1CollectedHeap::expand(size_t expand_bytes) {
   size_t aligned_expand_bytes = ReservedSpace::page_align_size_up(expand_bytes);
   aligned_expand_bytes = align_size_up(aligned_expand_bytes,

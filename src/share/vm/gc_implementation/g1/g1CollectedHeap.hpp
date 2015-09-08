@@ -278,12 +278,15 @@ private:
   // after heap shrinking (free_list_only == true).
   void rebuild_region_sets(bool free_list_only);
 
+  // <underscore> I could iterate this.
   // The sequence of all heap regions in the heap.
   HeapRegionSeq _hrs;
 
+  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy mutator allocation requests.
   MutatorAllocRegion _mutator_alloc_region;
 
+  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy allocation requests by the GC for
   // survivor objects.
   SurvivorGCAllocRegion _survivor_gc_alloc_region;
@@ -291,6 +294,7 @@ private:
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
 
+  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy allocation requests by the GC for
   // old objects.
   OldGCAllocRegion _old_gc_alloc_region;
@@ -760,6 +764,7 @@ public:
 
 protected:
 
+    // <underscore> This could be a viable solution to avoid garbage.
   // Shrink the garbage-first heap by at most the given size (in bytes!).
   // (Rounds down to a HeapRegion boundary.)
   virtual void shrink(size_t expand_bytes);
@@ -1293,20 +1298,29 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
   
-  // Asks the heap to prepare for migration. - rodrigo
-  virtual void prepare_migration(jlong bandwidth) {
-    printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
-    _min_migration_bandwidth = bandwidth;
-    
+  
+  // <underscore> used to print all heap regions. - delete?
+  class PrintHeapRegion : public HeapRegionClosure {
+    bool doHeapRegion(HeapRegion *hr) {
+        hr->print();
+    }
+  };
+   
     // TODO - I have to make a decision. Either to go for an initial-mark 
     // evacuation pause or not. This may improve the precision of the GC 
-    // efficiency estimates but it might take some time. 
-    // TODO - understand what really is the concurrent marking that we can start.
-    // TODO - I would like to have the GC cause accessible inside the 
-    // do_collection_pause_at_safepoint to be able to direct the call to the
-    // correct cset_ finalizer.
+    // efficiency estimates but it might take some time. Understand what really 
+    // is the concurrent marking that we can start.
+  
+    // TODO - check if I can get ranges of garbage after the collect.
+  
+    // Asks the heap to prepare for migration. - <underscore>
+  virtual void prepare_migration(jlong bandwidth) {
+    PrintHeapRegion phr;
+    printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
+    _min_migration_bandwidth = bandwidth;
+    print_extended_on(gclog_or_tty);
     collect(GCCause::_prepare_migration);
-    
+    print_extended_on(gclog_or_tty);
     // step 2 - iterate free list and check their addresses.
     _min_migration_bandwidth = 0;
   }

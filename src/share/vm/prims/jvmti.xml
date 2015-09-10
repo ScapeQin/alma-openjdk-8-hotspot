@@ -4958,6 +4958,26 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
+    <function id="SendFreeRegions" num="157">
+      <synopsis>Send Free Regions</synopsis>
+      <description>
+        TODO - documentation. - underscore
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+	<param id="sockfd">
+	  <jlong min="0"/>
+	    <description>
+	      Socket File Descriptor.
+	    </description>
+	</param>
+      </parameters>
+      <errors>
+      </errors>
+    </function>
+
 
   </category>
 

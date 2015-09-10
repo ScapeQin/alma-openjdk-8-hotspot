@@ -1299,30 +1299,39 @@ public:
   virtual void collect(GCCause::Cause cause);
   
   
-  // <underscore> used to print all heap regions. - delete?
-  class PrintHeapRegion : public HeapRegionClosure {
-    bool doHeapRegion(HeapRegion *hr) {
-        hr->print();
-    }
-  };
-   
+  // <underscore> used to print all heap regions. - delete? 
+    class PrintHeapRegion: public HeapRegionClosure {
+      outputStream* _st;
+    public:
+      PrintHeapRegion(outputStream* st) : _st(st) {}
+      bool doHeapRegion(HeapRegion* r) {
+        r->print_on(_st);
+        //HeapWord* end = hr->end();
+        //HeapWord* top = hr->top();
+        return false;
+      }
+    };
+    
     // TODO - I have to make a decision. Either to go for an initial-mark 
     // evacuation pause or not. This may improve the precision of the GC 
     // efficiency estimates but it might take some time. Understand what really 
     // is the concurrent marking that we can start.
   
-    // TODO - check if I can get ranges of garbage after the collect.
-  
-    // Asks the heap to prepare for migration. - <underscore>
+    // <underscore> - Asks the heap to prepare for migration.
   virtual void prepare_migration(jlong bandwidth) {
-    PrintHeapRegion phr;
     printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
     _min_migration_bandwidth = bandwidth;
     print_extended_on(gclog_or_tty);
     collect(GCCause::_prepare_migration);
-    print_extended_on(gclog_or_tty);
     // step 2 - iterate free list and check their addresses.
     _min_migration_bandwidth = 0;
+  }
+  // <underscore> - TODO - comment
+  virtual void send_free_regions(jint sockfd) {
+      printf("INSIDE G2 (sockfd=%d)!\n", sockfd);
+      PrintHeapRegion phr(gclog_or_tty); // TODO - write all free regions into socket
+      _hrs.iterate(&phr);
+      close(sockfd);
   }
 
   // The same as above but assume that the caller holds the Heap_lock.

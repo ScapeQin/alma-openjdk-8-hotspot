@@ -4968,7 +4968,7 @@ class C2 extends C1 implements I2 {
       </capabilities>
       <parameters>
 	<param id="sockfd">
-	  <jlong min="0"/>
+	  <jint min="0"/>
 	    <description>
 	      Socket File Descriptor.
 	    </description>

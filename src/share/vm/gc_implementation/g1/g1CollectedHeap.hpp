@@ -1320,15 +1320,16 @@ public:
     // <underscore> - Asks the heap to prepare for migration.
   virtual void prepare_migration(jlong bandwidth) {
     printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
+    fflush(stdout); // TODO - delete
     _min_migration_bandwidth = bandwidth;
     print_extended_on(gclog_or_tty);
     collect(GCCause::_prepare_migration);
-    // step 2 - iterate free list and check their addresses.
-    _min_migration_bandwidth = 0;
   }
   // <underscore> - TODO - comment
   virtual void send_free_regions(jint sockfd) {
+      _min_migration_bandwidth = 0;
       printf("INSIDE G2 (sockfd=%d)!\n", sockfd);
+      fflush(stdout); // TODO - delete
       PrintHeapRegion phr(gclog_or_tty); // TODO - write all free regions into socket
       _hrs.iterate(&phr);
       close(sockfd);

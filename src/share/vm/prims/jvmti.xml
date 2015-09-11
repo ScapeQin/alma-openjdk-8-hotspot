@@ -4958,7 +4958,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="SendFreeRegions" num="157">
+    <function id="SendFreeRegions" callbacksafe="safe" phase="any" num="157">
       <synopsis>Send Free Regions</synopsis>
       <description>
         TODO - documentation. - underscore

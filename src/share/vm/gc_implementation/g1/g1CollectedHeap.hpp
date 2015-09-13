@@ -42,6 +42,8 @@
 #include "memory/sharedHeap.hpp"
 #include "utilities/stack.hpp"
 
+#include <unistd.h> // <underscore> - needed for fd write
+
 // A "G1CollectedHeap" is an implementation of a java heap for HotSpot.
 // It uses the "Garbage First" heap organization and algorithm, which
 // may combine concurrent marking with parallel, incremental compaction of
@@ -1299,17 +1301,46 @@ public:
   virtual void collect(GCCause::Cause cause);
   
   
-  // <underscore> used to print all heap regions. - delete? 
+    // <underscore> used to print used heap regions
     class PrintHeapRegion: public HeapRegionClosure {
-      outputStream* _st;
+        outputStream* _st;
     public:
-      PrintHeapRegion(outputStream* st) : _st(st) {}
-      bool doHeapRegion(HeapRegion* r) {
-        r->print_on(_st);
-        //HeapWord* end = hr->end();
-        //HeapWord* top = hr->top();
-        return false;
-      }
+        PrintHeapRegion(outputStream* st) : _st(st) {}
+        bool doHeapRegion(HeapRegion* r) {
+            if(! (r->bottom() == r->top())) {
+                r->print_on(_st);
+            }
+            return false;
+        }
+    };
+    
+    // <underscore> used to send used heap regions
+    class SendFreeRegion: public HeapRegionClosure {
+        int _sockfd;
+    public:
+        SendFreeRegion(int sockfd) : _sockfd(sockfd) {}
+        bool doHeapRegion(HeapRegion* r) {
+            // Send if the region has at least 1 page of free space            
+            int page_size = 4*K;
+            int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / page_size;
+            gclog_or_tty->print_cr("end(" INTPTR_FORMAT ") - top(" INTPTR_FORMAT ") * sizeof(HeapWord)=%zu / page_size=%d = %d",
+                    r->end(),
+                    r->top(),
+                    sizeof(HeapWord),
+                    page_size,
+                    free_pages);
+            if(free_pages > 0) {
+                // Write pointer into socket, read poiter (uint64_t)
+                if (write(_sockfd, r->top_addr(), sizeof(HeapWord*)) < 0) {
+                    gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->top()");
+                }
+                if (write(_sockfd, r->end_addr(), sizeof(HeapWord*)) < 0) {
+                    gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->end()");
+                }
+            }
+            
+            return false;
+        }
     };
     
     // TODO - I have to make a decision. Either to go for an initial-mark 
@@ -1318,22 +1349,22 @@ public:
     // is the concurrent marking that we can start.
   
     // <underscore> - Asks the heap to prepare for migration.
-  virtual void prepare_migration(jlong bandwidth) {
-    printf("INSIDE G1 (bandwidth=%ld)!\n", bandwidth);
-    fflush(stdout); // TODO - delete
-    _min_migration_bandwidth = bandwidth;
-    print_extended_on(gclog_or_tty);
-    collect(GCCause::_prepare_migration);
-  }
-  // <underscore> - TODO - comment
-  virtual void send_free_regions(jint sockfd) {
-      _min_migration_bandwidth = 0;
-      printf("INSIDE G2 (sockfd=%d)!\n", sockfd);
-      fflush(stdout); // TODO - delete
-      PrintHeapRegion phr(gclog_or_tty); // TODO - write all free regions into socket
-      _hrs.iterate(&phr);
-      close(sockfd);
-  }
+    virtual void prepare_migration(jlong bandwidth) {
+        gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); fflush(stdout); // DEBUG
+        _min_migration_bandwidth = bandwidth;
+        //print_extended_on(gclog_or_tty);
+        PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
+        collect(GCCause::_prepare_migration);
+    }
+  
+    // <underscore> - TODO - comment
+    virtual void send_free_regions(jint sockfd) {
+        _min_migration_bandwidth = 0;
+        gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); fflush(stdout); //DEBUG
+        PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
+        SendFreeRegion sfr(sockfd);
+        _hrs.iterate(&sfr);
+    }
 
   // The same as above but assume that the caller holds the Heap_lock.
   void collect_locked(GCCause::Cause cause);

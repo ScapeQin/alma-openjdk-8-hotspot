@@ -1363,7 +1363,12 @@ public:
         gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); fflush(stdout); //DEBUG
         PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
         SendFreeRegion sfr(sockfd);
-        _hrs.iterate(&sfr);
+        _hrs.iterate(&sfr); // Version one
+        
+//        HeapRegionLinkedListIterator iter(&_free_list); // Version two
+//        while (iter.more_available()) {
+//            sfr.doHeapRegion(iter.get_next());          
+//        }
     }
 
   // The same as above but assume that the caller holds the Heap_lock.

@@ -1338,7 +1338,6 @@ public:
                     gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->end()");
                 }
             }
-            
             return false;
         }
     };
@@ -1350,25 +1349,26 @@ public:
   
     // <underscore> - Asks the heap to prepare for migration.
     virtual void prepare_migration(jlong bandwidth) {
-        gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); fflush(stdout); // DEBUG
+        gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); // DEBUG
         _min_migration_bandwidth = bandwidth;
         //print_extended_on(gclog_or_tty);
         PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
         collect(GCCause::_prepare_migration);
+        gclog_or_tty->print_cr("DONE G1 (bandwidth=%ld)", bandwidth);  // DEBUG
+        gclog_or_tty->flush(); // DEBUG
     }
   
     // <underscore> - TODO - comment
     virtual void send_free_regions(jint sockfd) {
+        gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); //DEBUG
         _min_migration_bandwidth = 0;
-        gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); fflush(stdout); //DEBUG
         PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
-        SendFreeRegion sfr(sockfd);
-        _hrs.iterate(&sfr); // Version one
-        
-//        HeapRegionLinkedListIterator iter(&_free_list); // Version two
-//        while (iter.more_available()) {
-//            sfr.doHeapRegion(iter.get_next());          
-//        }
+        if(sockfd) {
+            SendFreeRegion sfr(sockfd);
+            _hrs.iterate(&sfr); 
+        }
+        gclog_or_tty->print_cr("DONE G2 (sockfd=%d)!", sockfd); // DEBUG
+        gclog_or_tty->flush(); //DEBUG
     }
 
   // The same as above but assume that the caller holds the Heap_lock.

@@ -2420,7 +2420,7 @@ bool G1CollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
     case GCCause::_gc_locker:               return GCLockerInvokesConcurrent;
     case GCCause::_java_lang_system_gc:     return ExplicitGCInvokesConcurrent;
     case GCCause::_g1_humongous_allocation: return true;
-    case GCCause::_prepare_migration:       return true;
+    case GCCause::_prepare_migration:       return false; // TODO - decide!
     default:                                return false;
   }
 }

@@ -564,8 +564,6 @@ G1CollectedHeap::new_region_try_secondary_free_list() {
 
 // <underscore> This is an important method to analyze how regions are selected!.
 // <underscore> This is definitely the main function to allocate regions.
-// TODO - order main free list. Two ops to take into account: expand, second free
-// list append
 HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
   assert(!isHumongous(word_size) || word_size <= HeapRegion::GrainWords,
          "the only time we use this to allocate a humongous region is "
@@ -580,9 +578,7 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
       }
       res = new_region_try_secondary_free_list();
       if (res != NULL) {
-        // <underscore> added print
-        gclog_or_tty->print_cr("[new_region] "PTR_FORMAT" "PTR_FORMAT"", res->bottom(), res->end());
-        return res; // <underscore> added print
+        return res;
       }
     }
   }
@@ -619,8 +615,6 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
       _expand_heap_after_alloc_failure = false;
     }
   }
-  // <underscore> added print
-  gclog_or_tty->print_cr("[new_region] "PTR_FORMAT" "PTR_FORMAT"", res->bottom(), res->end());
   return res; 
 }
 

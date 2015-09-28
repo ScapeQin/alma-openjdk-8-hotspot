@@ -4073,7 +4073,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         }
         // </underscore>
 
-        /* <underscore> */
+        /* <underscore> 
         {
           HeapRegion* r = g1_policy()->collection_set();
           r->calc_gc_efficiency();
@@ -4092,7 +4092,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           }
           gclog_or_tty->print("\n%d regions to collect. Min efficiency %f. ", hcount, gc_efficiency);
         }
-        /* </underscore> */
+         </underscore> */
         
         _cm->note_start_of_gc();
         // We should not verify the per-thread SATB buffers given that

@@ -1349,7 +1349,7 @@ public:
      
     // <underscore> - Asks the heap to prepare for migration.
     virtual void prepare_migration(jlong bandwidth) {
-        static bool already_predumped = false;
+        static bool already_predumped = true; // true forces GC.
         gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); // DEBUG
         _min_migration_bandwidth = bandwidth;
         //print_extended_on(gclog_or_tty);
@@ -1361,7 +1361,7 @@ public:
         }
         gclog_or_tty->print_cr("DONE G1 (bandwidth=%ld)", bandwidth);  // DEBUG
         gclog_or_tty->flush(); // DEBUG
-        already_predumped = already_predumped ? 0 : 1;
+        // already_predumped = already_predumped ? 0 : 1;
     }
   
     // <underscore> - TODO - comment

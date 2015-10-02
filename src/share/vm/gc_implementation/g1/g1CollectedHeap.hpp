@@ -1386,9 +1386,8 @@ public:
     virtual void send_free_regions(jint sockfd) {
         gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); //DEBUG
         _min_migration_bandwidth = 0;
-        
-        if(sockfd) {
-            SendFreeRegion sfr(sockfd);
+        SendFreeRegion sfr(sockfd);
+        if(sockfd) { // TODO - delete test
             _hrs.iterate(&sfr); 
         }
 

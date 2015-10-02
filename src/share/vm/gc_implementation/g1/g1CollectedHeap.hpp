@@ -1369,11 +1369,11 @@ public:
         // Using this inc_collection_pause cause, it does not trigger a new marking
         // cycle.
         if(bandwidth) {
-            collect(GCCause::_g1_inc_collection_pause);
+            collect(GCCause::_prepare_migration);
         }
         // Start concurrent marking collection
         else {
-            collect(GCCause::_prepare_migration);    
+            collect(GCCause::_g1_humongous_allocation);    
         }
         
         
@@ -1387,10 +1387,7 @@ public:
         gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); //DEBUG
         _min_migration_bandwidth = 0;
         SendFreeRegion sfr(sockfd);
-        if(sockfd) { // TODO - delete test
-            _hrs.iterate(&sfr); 
-        }
-
+        _hrs.iterate(&sfr); 
         gclog_or_tty->print_cr("DONE G2 (sockfd=%d), regions=%d, free_pages=%d!", sockfd, sfr.get_n_regions(), sfr.get_free_pages()); // DEBUG
         gclog_or_tty->flush(); //DEBUG
     }

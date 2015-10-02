@@ -4073,7 +4073,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         }
         // </underscore>
 
-        /* <underscore> 
+        /* <underscore>  THIS CODE IS BUGGY!
         {
           HeapRegion* r = g1_policy()->collection_set();
           r->calc_gc_efficiency();

@@ -491,10 +491,7 @@ private:
   } while (0)
 
 protected:
-
-  // <underscore> Minimum migration bandiwdth.
-  jlong _min_migration_bandwidth;
-    
+   
   // The young region list.
   YoungList*  _young_list;
 
@@ -680,6 +677,9 @@ protected:
 
 public:
 
+  // <underscore> Minimum migration bandiwdth.
+  jlong _min_migration_bandwidth;
+    
   G1MonitoringSupport* g1mm() {
     assert(_g1mm != NULL, "should have been initialized");
     return _g1mm;
@@ -1342,32 +1342,37 @@ public:
         }
     };
     
-    // TODO - I have to make a decision. Either to go for an initial-mark 
-    // evacuation pause or not. This may improve the precision of the GC 
-    // efficiency estimates but it might take some time. Understand what really 
-    // is the concurrent marking that we can start.
-     
     // <underscore> - Asks the heap to prepare for migration.
     virtual void prepare_migration(jlong bandwidth) {
-        static bool already_predumped = true; // true forces GC.
         gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); // DEBUG
         _min_migration_bandwidth = bandwidth;
         //print_extended_on(gclog_or_tty);
         PrintHeapRegion phr(gclog_or_tty); _hrs.iterate(&phr); // DEBUG
-        // If we do not call a collection, we will wait until the next one 
+        // NOTE: If we do not call a collection, we will wait until the next one 
         // (triggered) by the application or the GC itself.
-        if(already_predumped) {
-            collect(GCCause::_prepare_migration);
+        // We force a new concurrent marking cycle because it releases a lot of
+        // memory!
+        // Using this inc_collection_pause cause, it does not trigger a new marking
+        // cycle.
+        if(bandwidth) {
+            collect(GCCause::_g1_inc_collection_pause);
         }
+        // Start concurrent marking collection
+        else {
+            collect(GCCause::_prepare_migration);    
+        }
+        
+        
+        
         gclog_or_tty->print_cr("DONE G1 (bandwidth=%ld)", bandwidth);  // DEBUG
         gclog_or_tty->flush(); // DEBUG
-        // already_predumped = already_predumped ? 0 : 1;
     }
   
     // <underscore> - TODO - comment
     virtual void send_free_regions(jint sockfd) {
         gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); //DEBUG
         _min_migration_bandwidth = 0;
+        
         if(sockfd) {
             SendFreeRegion sfr(sockfd);
             _hrs.iterate(&sfr); 

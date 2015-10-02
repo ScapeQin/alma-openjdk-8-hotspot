@@ -1317,12 +1317,18 @@ public:
     // <underscore> used to send used heap regions
     class SendFreeRegion: public HeapRegionClosure {
         int _sockfd;
+        int _free_pages;
+        int _nregions;
     public:
-        SendFreeRegion(int sockfd) : _sockfd(sockfd) {}
+        SendFreeRegion(int sockfd) : _sockfd(sockfd), _free_pages(0), _nregions(0) {}
         bool doHeapRegion(HeapRegion* r) {
             // Send if the region has at least 1 page of free space            
             int page_size = 4*K;
             int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / page_size;
+            
+            _free_pages += free_pages;
+            _nregions++;
+            
             gclog_or_tty->print_cr("end(" INTPTR_FORMAT ") - top(" INTPTR_FORMAT ") * sizeof(HeapWord)=%zu / page_size=%d = %d",
                     r->end(),
                     r->top(),
@@ -1339,6 +1345,14 @@ public:
                 }
             }
             return false;
+        }
+        
+        int get_free_pages() {
+            return _free_pages;
+        }
+        
+        int get_n_regions() {
+            return _nregions;
         }
     };
     
@@ -1377,7 +1391,8 @@ public:
             SendFreeRegion sfr(sockfd);
             _hrs.iterate(&sfr); 
         }
-        gclog_or_tty->print_cr("DONE G2 (sockfd=%d)!", sockfd); // DEBUG
+
+        gclog_or_tty->print_cr("DONE G2 (sockfd=%d), regions=%d, free_pages=%d!", sockfd, sfr.get_n_regions(), sfr.get_free_pages()); // DEBUG
         gclog_or_tty->flush(); //DEBUG
     }
 

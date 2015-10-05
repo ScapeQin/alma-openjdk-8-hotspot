@@ -167,6 +167,13 @@ class ParallelScavengeHeap : public CollectedHeap {
   // <underscore> collect -> vmThread.execute -> VM_ParallelGCSystemGC.doit()
   // <underscore> -> [invoke_scavenge | do_full_collection]
   void collect(GCCause::Cause cause);
+  
+  // This method asks the heap to prepare for migration.
+  virtual void prepare_migration(jlong bandwidth);
+ 
+  // This method asks the heap to send the free heap regions through the sock
+  // file descriptor.
+  virtual void send_free_regions(jint sockfd);
 
   // These also should be called by the vm thread at a safepoint (e.g., from a
   // VM operation).

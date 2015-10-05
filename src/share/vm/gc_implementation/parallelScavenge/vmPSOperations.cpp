@@ -76,8 +76,10 @@ void VM_ParallelGCSystemGC::doit() {
   if (_gc_cause == GCCause::_gc_locker
       DEBUG_ONLY(|| _gc_cause == GCCause::_scavenge_alot)) {
     // If (and only if) the scavenge fails, this will invoke a full gc.
+      gclog_or_tty->print_cr("Going to minor collection <underscore>");
     heap->invoke_scavenge();
   } else {
+      gclog_or_tty->print_cr("Going for full collection <underscore>");
     heap->do_full_collection(false);
   }
 }

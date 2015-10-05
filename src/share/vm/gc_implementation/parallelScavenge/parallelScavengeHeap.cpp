@@ -52,6 +52,31 @@ PSGCAdaptivePolicyCounters* ParallelScavengeHeap::_gc_policy_counters = NULL;
 ParallelScavengeHeap* ParallelScavengeHeap::_psh = NULL;
 GCTaskManager* ParallelScavengeHeap::_gc_task_manager = NULL;
 
+  // This method asks the heap to prepare for migration.
+  void ParallelScavengeHeap::prepare_migration(jlong bandwidth) {
+      gclog_or_tty->print_cr("INSIDE PS (bandwidth=%ld)", bandwidth); // DEBUG
+      this->print_on(gclog_or_tty);
+      // TODO - call collect and done;
+      //collect(GCCause::_gc_locker); // I guess both ways are valid...
+      uint gc_count = 0;
+      {
+        MutexLocker ml(Heap_lock);
+        gc_count = Universe::heap()->total_collections();
+      }
+      VM_ParallelGCFailedAllocation op(0, gc_count);
+      VMThread::execute(&op);
+      gclog_or_tty->print_cr("DONE PS (bandwidth=%ld)", bandwidth); // DEBUG
+  }
+ 
+  // This method asks the heap to send the free heap regions through the sock
+  // file descriptor.
+  void ParallelScavengeHeap::send_free_regions(jint sockfd) { 
+    gclog_or_tty->print_cr("INSIDE PS (sockfd=%d)!", sockfd); //DEBUG 
+    this->print_on(gclog_or_tty);
+      // TODO - need to send eden and to spaces addresses!
+    gclog_or_tty->print_cr("DONE PS (sockfd=%d)!", sockfd); //DEBUG  
+  }
+
 jint ParallelScavengeHeap::initialize() {
   CollectedHeap::pre_initialize();
 
@@ -445,6 +470,13 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   // First level allocation failure, scavenge and allocate in young gen.
   GCCauseSetter gccs(this, GCCause::_allocation_failure);
   const bool invoked_full_gc = PSScavenge::invoke();
+  
+  // <underscore> This if exits after doing the minor GC. We faked a failed
+  // allocation to force a minor GC.
+  if(!size) {
+      return (HeapWord*)1;
+  }
+  
   HeapWord* result = young_gen()->allocate(size);
 
   // Second level allocation failure.

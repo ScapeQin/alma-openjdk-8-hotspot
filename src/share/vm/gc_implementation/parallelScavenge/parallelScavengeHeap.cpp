@@ -56,15 +56,7 @@ GCTaskManager* ParallelScavengeHeap::_gc_task_manager = NULL;
   void ParallelScavengeHeap::prepare_migration(jlong bandwidth) {
       gclog_or_tty->print_cr("INSIDE PS (bandwidth=%ld)", bandwidth); // DEBUG
       this->print_on(gclog_or_tty);
-      // TODO - call collect and done;
-      //collect(GCCause::_gc_locker); // I guess both ways are valid...
-      uint gc_count = 0;
-      {
-        MutexLocker ml(Heap_lock);
-        gc_count = Universe::heap()->total_collections();
-      }
-      VM_ParallelGCFailedAllocation op(0, gc_count);
-      VMThread::execute(&op);
+      collect(GCCause::_gc_locker);
       gclog_or_tty->print_cr("DONE PS (bandwidth=%ld)", bandwidth); // DEBUG
   }
  
@@ -73,7 +65,23 @@ GCTaskManager* ParallelScavengeHeap::_gc_task_manager = NULL;
   void ParallelScavengeHeap::send_free_regions(jint sockfd) { 
     gclog_or_tty->print_cr("INSIDE PS (sockfd=%d)!", sockfd); //DEBUG 
     this->print_on(gclog_or_tty);
-      // TODO - need to send eden and to spaces addresses!
+    
+    // Send free Eden, Write pointer into socket, read poiter (uint64_t)
+    if (write(sockfd, this->young_gen()->eden_space()->top_addr(), sizeof(HeapWord*)) < 0) {
+        gclog_or_tty->print_cr("[send_free_regions] ERROR sending r->top()");
+    }
+    if (write(sockfd, this->young_gen()->eden_space()->end_addr(), sizeof(HeapWord*)) < 0) {
+        gclog_or_tty->print_cr("[send_free_regions] ERROR sending r->end()");
+    }
+    
+    // Send free To, Write pointer into socket, read poiter (uint64_t)
+    if (write(sockfd, this->young_gen()->to_space()->top_addr(), sizeof(HeapWord*)) < 0) {
+        gclog_or_tty->print_cr("[send_free_regions] ERROR sending r->top()");
+    }
+    if (write(sockfd, this->_young_gen->to_space()->end_addr(), sizeof(HeapWord*)) < 0) {
+        gclog_or_tty->print_cr("[send_free_regions] ERROR sending r->end()");
+    }
+    
     gclog_or_tty->print_cr("DONE PS (sockfd=%d)!", sockfd); //DEBUG  
   }
 
@@ -470,13 +478,7 @@ HeapWord* ParallelScavengeHeap::failed_mem_allocate(size_t size) {
   // First level allocation failure, scavenge and allocate in young gen.
   GCCauseSetter gccs(this, GCCause::_allocation_failure);
   const bool invoked_full_gc = PSScavenge::invoke();
-  
-  // <underscore> This if exits after doing the minor GC. We faked a failed
-  // allocation to force a minor GC.
-  if(!size) {
-      return (HeapWord*)1;
-  }
-  
+   
   HeapWord* result = young_gen()->allocate(size);
 
   // Second level allocation failure.

@@ -2177,8 +2177,8 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
                 ergo_format_ms("target pause time"),
                 _pending_cards, base_time_ms, time_remaining_ms, target_pause_time_ms);
 
-  /* <underscore> TODO - need to force mixed GC. */
   _last_gc_was_young = gcs_are_young() ? true : false;
+  _last_gc_was_young = false; /* <underscore> forcing mixed collection */
 
   if (_last_gc_was_young) {
     _trace_gen0_time_data.increment_young_collection_count();
@@ -2233,8 +2233,7 @@ void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidt
   // regions.
   // For now, I will force through this check and try to look into the 
   // collection chooser for old regions worth to collect.
-  /* <underscore> TODO - need to force mixed GC. */
-  if (!gcs_are_young()) {
+  if (1) { /* <underscore> forcing mixed GC. */
     CollectionSetChooser* cset_chooser = _collectionSetChooser;
     // <underscore> check if cset is sorted
     cset_chooser->verify();
